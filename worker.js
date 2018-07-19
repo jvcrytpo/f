@@ -4,10 +4,14 @@ const puppeteer = require('puppeteer');
 process
     .on('uncaughtException', function (err) {
         console.log('uncaughtException', err);
-        process.exit();
+        (async () => {
+            startBot();
+        })();
     }).on("unhandledRejection", (reason, p) => {
         console.log('unhandledRejection', reason, p);
-        process.exit();
+        (async () => {
+            startBot();
+        })();
     });
 
 const URL = process.env.URL;
@@ -136,7 +140,6 @@ const startBot = async () => {
 })();
 
 const login = async (page) => {
-
     checkSelector(page, 'section.top-bar-section ul li.login_menu_button a', async (page) => {
         await page.click('section.top-bar-section ul li.login_menu_button a');
         
@@ -152,14 +155,25 @@ const login = async (page) => {
     })
 }
 
+const getBalance = async (page) => {
+    const balance = await page.evaluate(() => {
+        const text = document.querySelector('#balance').textContent;
+        return text;
+    })
+    console.log(`Balance: ${balance}`);
+}
+
 const homePage = async (page) => {
-    
-    page.screenshot({ path: "test.png" });
+
+    getBalance(page);
+
+    //page.screenshot({ path: "test.png" });
     
     //remove captcha
 
     //roll button
     
+    getBalance(page);
 
     //wait 1 hour
     //console.log('Waiting 1 hour...');
