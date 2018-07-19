@@ -25,8 +25,7 @@ const APP = process.env.APP;
 
 const restartApp = (seconds) => {
     var count = 0;
-    var countdownRestartInterval = setInterval(function (count, seconds) {
-        console.log(count);
+    var countdownRestartInterval = setInterval(function (seconds) {
         if (count >= seconds) {
             count = 0;
             heroku.delete(`/apps/${APP}/dynos`).then(app => {})
@@ -34,12 +33,12 @@ const restartApp = (seconds) => {
         } else {
             count++;
         }
-    }, 1000, count, seconds);
+    }, 1000, seconds);
 }
 
 const countdown = (page, seconds, callback) => {
     var count = 0;
-    var countdownInterval = setInterval(function (count, seconds, page, callback) {
+    var countdownInterval = setInterval(function () {
         if (count >= seconds) {
             count = 0;
             clearInterval(countdownInterval);
@@ -47,10 +46,10 @@ const countdown = (page, seconds, callback) => {
         } else {
             count++;
         }
-    }, 1000, count, seconds, page, callback);
+    }, 1000);
 }
 
-const gotoURL = async (page, url = null, callback, errCallback = null, btn = null) => {
+const gotoURL = async (page, url = null, callback, btn = null, errCallback = null) => {
     if (btn) {
         console.log(`Waiting for navigation.`)
         await Promise.all([
@@ -77,7 +76,7 @@ const gotoURL = async (page, url = null, callback, errCallback = null, btn = nul
                 callback(page);
             }, e => {
                 console.log('Exceeded timeout, retrying navigation');
-                gotoURL(page, url, callback, btn);
+                gotoURL(page, url, callback);
             }
         );
     }
@@ -121,7 +120,7 @@ const checkSelector = async (page, selector, callback, errCallback = null) => {
 
 const startBot = async () => {
 
-    restartApp(10);
+    restartApp(3600 * 3); //Every 3 hours
 
     let browser = null;
 
@@ -172,7 +171,18 @@ const login = async (page) => {
 
         gotoURL(page, null, (page) => {
             homePage(page);
-        }, null, '#login_button');
+        }, '#login_button', (page) => {
+            if (page.$('.reward_point_redeem_result_error') !== null) {
+                console.log('Too many tries logging in, wait 10 minutes.');
+                countdown(page, 600, (page) => {
+                    refreshPage(page, (page) => {
+                        login(page);
+                    });
+                })
+            } else {
+                login(page);
+            }
+        });
     })
 }
 
@@ -185,20 +195,42 @@ const getBalance = async (page) => {
 }
 
 const homePage = async (page) => {
+    checkSelector(page, '#time_remaining', async (page) => {
+        const timeMinText = await page.evaluate(() => {
+            const text = document.querySelector('#time_remaining .countdown_row .countdown_section:first-of-type .countdown_amount').textContent;
+            return text;
+        })
+        let timeNum = Number(timeMinText) * 60;
 
-    getBalance(page);
+        if (timeNum === 0) {
+            const timeSecText = await page.evaluate(() => {
+                const text = document.querySelector('#time_remaining .countdown_row .countdown_section:last-of-type .countdown_amount').textContent;
+                return text;
+            })
+            timeNum = Number(timeSecText);
+        }
 
-    //page.screenshot({ path: "test.png" });
+        console.log(`Timer still active, ${timeNum} seconds left.`);
 
-    //remove captcha
-
-    //roll button
-
-    getBalance(page);
-
-    //wait 1 hour
-    //console.log('Waiting 1 hour...');
-    //countdown(page, 3600, homePage)
+        countdown(page, timeNum, (page) => {
+            refreshPage(page, (page) => {
+                homePage(page);
+            });
+        })
+    }, async (page) => {
+        checkSelector(page, '#play_without_captchas_button', async (page) => {
+            getBalance(page);
+            await page.click('#play_without_captchas_button');
+            await page.click('#free_play_form_button');
+            await page.waitFor(3000);
+            console.log('Rolled...')
+            getBalance(page);
+            console.log('Waiting 1 hour...');
+            countdown(page, 3600, (page) => {
+                refreshPage(page, (page) => {
+                    homePage(page);
+                })
+            })
+        })
+    })
 }
-
-//3600 wait 1 hour
