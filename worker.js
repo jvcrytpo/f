@@ -11,6 +11,21 @@ process
     });
 
 const URL = process.env.URL;
+const USERNAME = process.env.USERNAME;
+const PASSWORD = process.env.PASSWORD;
+
+const countdown = (page, seconds, callback) => {
+    var count = 0;
+    var countdownInterval = setInterval(function (count, seconds, page, callback) {
+        if (count >= seconds) {
+            count = 0;
+            clearInterval(countdownInterval);
+            callback(page);
+        } else {
+            count++;
+        }
+    }, 1000, count, seconds, page, callback);
+}
 
 const gotoURL = async (page, url = null, callback, errCallback = null, btn = null) => {
     if (btn) {
@@ -35,7 +50,6 @@ const gotoURL = async (page, url = null, callback, errCallback = null, btn = nul
             waitUntil: "networkidle0"
         }).then(
             s => {
-                page.screenshot({ path: "test.png" })
                 console.log(`Successfully navigated to: ${url}`);
                 callback(page);
             }, e => {
@@ -112,7 +126,7 @@ const startBot = async () => {
             request.continue();
     });
 
-    gotoURL(page, URL, (page) => {
+    gotoURL(page, `${URL}`, (page) => {
         login(page);
     });
 }
@@ -122,14 +136,34 @@ const startBot = async () => {
 })();
 
 const login = async (page) => {
-    
-    checkSelector(page, 'input#login_form_btc_address', async (page) => {
+
+    checkSelector(page, 'section.top-bar-section ul li.login_menu_button a', async (page) => {
+        await page.click('section.top-bar-section ul li.login_menu_button a');
+        
         await page.click('input#login_form_btc_address');
-        await page.keyboard.type(process.env.USERNAME);
+        await page.keyboard.type(USERNAME);
 
         await page.click('input#login_form_password');
-        await page.keyboard.type(process.env.PASSWORD);
+        await page.keyboard.type(PASSWORD);
 
-        process.exit();
-    });
+        gotoURL(page, null, (page) => {
+            homePage(page);
+        }, null, '#login_button');
+    })
 }
+
+const homePage = async (page) => {
+    
+    page.screenshot({ path: "test.png" });
+    
+    //remove captcha
+
+    //roll button
+    
+
+    //wait 1 hour
+    //console.log('Waiting 1 hour...');
+    //countdown(page, 3600, homePage)
+}
+
+//3600 wait 1 hour
