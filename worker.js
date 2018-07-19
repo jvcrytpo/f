@@ -195,41 +195,41 @@ const getBalance = async (page) => {
 }
 
 const homePage = async (page) => {
-    checkSelector(page, '#time_remaining', async (page) => {
-        const timeMinText = await page.evaluate(() => {
-            const text = document.querySelector('#time_remaining .countdown_row .countdown_section:first-of-type .countdown_amount').textContent;
-            return text;
-        })
-        let timeNum = Number(timeMinText) * 60;
-
-        if (timeNum === 0) {
-            const timeSecText = await page.evaluate(() => {
-                const text = document.querySelector('#time_remaining .countdown_row .countdown_section:last-of-type .countdown_amount').textContent;
-                return text;
-            })
-            timeNum = Number(timeSecText);
-        }
-
-        console.log(`Timer still active, ${timeNum} seconds left.`);
-
-        countdown(page, timeNum, (page) => {
+    checkSelector(page, '#play_without_captchas_button', async (page) => {
+        getBalance(page);
+        await page.click('#play_without_captchas_button');
+        await page.click('#free_play_form_button');
+        await page.waitFor(3000);
+        console.log('Rolled...')
+        getBalance(page);
+        console.log('Waiting 1 hour...');
+        countdown(page, 3600, (page) => {
             refreshPage(page, (page) => {
                 homePage(page);
-            });
+            })
         })
     }, async (page) => {
-        checkSelector(page, '#play_without_captchas_button', async (page) => {
-            getBalance(page);
-            await page.click('#play_without_captchas_button');
-            await page.click('#free_play_form_button');
-            await page.waitFor(3000);
-            console.log('Rolled...')
-            getBalance(page);
-            console.log('Waiting 1 hour...');
-            countdown(page, 3600, (page) => {
+        checkSelector(page, '#time_remaining', async (page) => {
+            const timeMinText = await page.evaluate(() => {
+                const text = document.querySelector('#time_remaining .countdown_row .countdown_section:first-of-type .countdown_amount').textContent;
+                return text;
+            })
+            let timeNum = Number(timeMinText) * 60;
+
+            if (timeNum === 0) {
+                const timeSecText = await page.evaluate(() => {
+                    const text = document.querySelector('#time_remaining .countdown_row .countdown_section:last-of-type .countdown_amount').textContent;
+                    return text;
+                })
+                timeNum = Number(timeSecText);
+            }
+
+            console.log(`Timer still active, ${timeNum} seconds left.`);
+
+            countdown(page, timeNum, (page) => {
                 refreshPage(page, (page) => {
                     homePage(page);
-                })
+                });
             })
         })
     })
