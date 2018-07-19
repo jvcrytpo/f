@@ -173,8 +173,8 @@ const login = async (page) => {
             homePage(page);
         }, '#login_button', (page) => {
             if (page.$('.reward_point_redeem_result_error') !== null) {
-                console.log('Too many tries logging in, wait 10 minutes.');
-                countdown(page, 600, (page) => {
+                console.log('Too many tries logging in, wait 5 minutes.');
+                countdown(page, 300, (page) => {
                     refreshPage(page, (page) => {
                         login(page);
                     });
