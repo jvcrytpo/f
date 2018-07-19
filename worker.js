@@ -1,5 +1,9 @@
 require('dotenv').config()
 const puppeteer = require('puppeteer');
+const Heroku = require('heroku-client')
+const heroku = new Heroku({
+    token: process.env.HEROKU_API_TOKEN
+})
 
 process
     .on('uncaughtException', function (err) {
@@ -17,6 +21,21 @@ process
 const URL = process.env.URL;
 const USERNAME = process.env.USERNAME;
 const PASSWORD = process.env.PASSWORD;
+const APP = process.env.APP;
+
+const restartApp = (seconds) => {
+    var count = 0;
+    var countdownRestartInterval = setInterval(function (count, seconds) {
+        console.log(count);
+        if (count >= seconds) {
+            count = 0;
+            heroku.delete(`/apps/${APP}/dynos`).then(app => {})
+            clearInterval(countdownRestartInterval);
+        } else {
+            count++;
+        }
+    }, 1000, count, seconds);
+}
 
 const countdown = (page, seconds, callback) => {
     var count = 0;
@@ -102,6 +121,8 @@ const checkSelector = async (page, selector, callback, errCallback = null) => {
 
 const startBot = async () => {
 
+    restartApp(10);
+
     let browser = null;
 
     if (process.env.ENV === 'production') {
@@ -142,7 +163,7 @@ const startBot = async () => {
 const login = async (page) => {
     checkSelector(page, 'section.top-bar-section ul li.login_menu_button a', async (page) => {
         await page.click('section.top-bar-section ul li.login_menu_button a');
-        
+
         await page.click('input#login_form_btc_address');
         await page.keyboard.type(USERNAME);
 
@@ -168,11 +189,11 @@ const homePage = async (page) => {
     getBalance(page);
 
     //page.screenshot({ path: "test.png" });
-    
+
     //remove captcha
 
     //roll button
-    
+
     getBalance(page);
 
     //wait 1 hour

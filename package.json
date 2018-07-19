@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^6.0.0",
+    "heroku-client": "^3.0.6",
     "puppeteer": "^1.6.0"
   }
 }
