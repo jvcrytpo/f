@@ -1,4 +1,5 @@
 require('dotenv').config()
+var authenticator = require('authenticator');
 const puppeteer = require('puppeteer');
 const Heroku = require('heroku-client')
 const heroku = new Heroku({
@@ -22,6 +23,7 @@ const URL = process.env.URL;
 const USERNAME = process.env.USERNAME;
 const PASSWORD = process.env.PASSWORD;
 const APP = process.env.APP;
+const KEY = process.env.KEY;
 
 const restartApp = (seconds) => {
     var count = 0;
@@ -169,11 +171,19 @@ const login = async (page) => {
         await page.click('input#login_form_password');
         await page.keyboard.type(PASSWORD);
 
+        await page.click('input#login_form_2fa');
+        var formattedToken = authenticator.generateToken(KEY);
+        await page.keyboard.type(formattedToken);
+
         gotoURL(page, null, (page) => {
             homePage(page);
-        }, '#login_button', (page) => {
+        }, '#login_button', async (page) => {
             if (page.$('.reward_point_redeem_result_error') !== null) {
-                console.log('Too many tries logging in, wait 5 minutes.');
+                const errMsg = await page.evaluate(() => {
+                    const text = document.querySelector('.reward_point_redeem_result_error').textContent;
+                    return text;
+                })
+                console.log(errMsg);
                 countdown(page, 300, (page) => {
                     refreshPage(page, (page) => {
                         login(page);
@@ -198,6 +208,7 @@ const homePage = async (page) => {
     checkSelector(page, '#play_without_captchas_button', async (page) => {
         getBalance(page);
         await page.click('#play_without_captchas_button');
+        await page.waitFor(3000);
         await page.click('#free_play_form_button');
         await page.waitFor(3000);
         console.log('Rolled...')
