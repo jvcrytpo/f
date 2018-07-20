@@ -51,12 +51,13 @@ const countdown = (page, seconds, callback) => {
     }, 1000);
 }
 
-const gotoURL = async (page, url = null, callback, btn = null, errCallback = null) => {
+const gotoURL = async (page, url = null, callback, btn = null, errCallback = null, timeout = 30000, subError = null) => {
     if (btn) {
         console.log(`Waiting for navigation.`)
         await Promise.all([
             page.waitForNavigation({
-                waitUntil: "networkidle0"
+                waitUntil: "networkidle0",
+                timeout
             }),
             page.click(btn),
         ]).then(
@@ -64,14 +65,19 @@ const gotoURL = async (page, url = null, callback, btn = null, errCallback = nul
                 console.log(`Successfully waited for navigation.`);
                 callback(page);
             }, e => {
-                console.log('Exceeded timeout, retrying to wait for navigation');
-                refreshPage(page, errCallback)
+                if (subError) {
+                    subError(page, errCallback);
+                } else {
+                    console.log('Exceeded timeout, retrying to wait for navigation');
+                    refreshPage(page, errCallback)
+                }
             }
         );
     } else {
         console.log(`Navigating to: ${url}`)
         await page.goto(url, {
-            waitUntil: "networkidle0"
+            waitUntil: "networkidle0",
+            timeout
         }).then(
             s => {
                 console.log(`Successfully navigated to: ${url}`);
@@ -100,9 +106,11 @@ const refreshPage = async (page, callback) => {
     )
 }
 
-const checkSelector = async (page, selector, callback, errCallback = null) => {
+const checkSelector = async (page, selector, callback, errCallback = null, timeout = 30000) => {
     console.log(`Checking for selector: ${selector}`)
-    await page.waitForSelector(selector).then(
+    await page.waitForSelector(selector, {
+        timeout
+    }).then(
         s => {
             console.log(`Found selector: ${selector}`);
             callback(page);
@@ -163,6 +171,9 @@ const startBot = async () => {
 
 const login = async (page) => {
     checkSelector(page, 'section.top-bar-section ul li.login_menu_button a', async (page) => {
+
+        console.log('Logging in...');
+
         await page.click('section.top-bar-section ul li.login_menu_button a');
 
         await page.click('input#login_form_btc_address');
@@ -172,25 +183,38 @@ const login = async (page) => {
         await page.keyboard.type(PASSWORD);
 
         await page.click('input#login_form_2fa');
-        var formattedToken = authenticator.generateToken(KEY);
+        var formattedToken = await authenticator.generateToken(KEY);
         await page.keyboard.type(formattedToken);
 
         gotoURL(page, null, (page) => {
             homePage(page);
         }, '#login_button', async (page) => {
+            login(page);
+        }, 10000, async (page, errCallback) => {
             if (page.$('.reward_point_redeem_result_error') !== null) {
                 const errMsg = await page.evaluate(() => {
                     const text = document.querySelector('.reward_point_redeem_result_error').textContent;
                     return text;
                 })
+
                 console.log(errMsg);
-                countdown(page, 300, (page) => {
-                    refreshPage(page, (page) => {
-                        login(page);
-                    });
-                })
+
+                switch (errMsg) {
+                    case str.indexOf("tries.") >= 0:
+                        countdown(page, 300, (page) => {
+                            refreshPage(page, (page) => {
+                                login(page);
+                            });
+                        })
+                        break;
+                    default:
+                        refreshPage(page, (page) => {
+                            login(page);
+                        });
+                        break;
+                }
             } else {
-                login(page);
+                refreshPage(page, errCallback);
             }
         });
     })
@@ -242,6 +266,10 @@ const homePage = async (page) => {
                     homePage(page);
                 });
             })
-        })
-    })
+        }, async (page) => {
+            refreshPage(page, (page) => {
+                homePage(page);
+            });
+        }, 5000)
+    }, 5000)
 }
