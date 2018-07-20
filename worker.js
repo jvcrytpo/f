@@ -245,21 +245,21 @@ const homePage = async (page) => {
         })
     }, async (page) => {
         checkSelector(page, '#time_remaining', async (page) => {
+            getBalance(page);
             const timeMinText = await page.evaluate(() => {
                 const text = document.querySelector('#time_remaining .countdown_row .countdown_section:first-of-type .countdown_amount').textContent;
                 return text;
             })
-            let timeNum = Number(timeMinText) * 60;
 
-            if (timeNum === 0) {
-                const timeSecText = await page.evaluate(() => {
-                    const text = document.querySelector('#time_remaining .countdown_row .countdown_section:last-of-type .countdown_amount').textContent;
-                    return text;
-                })
-                timeNum = Number(timeSecText);
-            }
+            const timeSecText = await page.evaluate(() => {
+                const text = document.querySelector('#time_remaining .countdown_row .countdown_section:last-of-type .countdown_amount').textContent;
+                return text;
+            })
 
-            console.log(`Timer still active, ${timeNum} seconds left.`);
+            console.log(`Timer still active, ${timeMinText} Minutes ${timeSecText} Seconds remaining.`);
+            const timeMinNum = Number(timeMinText) * 60;
+            const timeSecNum = Number(timeSecText);
+            const timeNum = timeMinNum + timeSecNum;
 
             countdown(page, timeNum, (page) => {
                 refreshPage(page, (page) => {
