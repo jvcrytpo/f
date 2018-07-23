@@ -173,7 +173,10 @@ const startBot = async () => {
     });
 
     gotoURL(page, `${URL}`, (page) => {
-        console.log('Starting.');
+        console.log('Starting.')
+        setInterval(() => {
+            console.log('Still alive.')
+        }, 30000);
     });
 }
 
