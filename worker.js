@@ -21,10 +21,10 @@ process
 
 const URL = process.env.URL;
 //const EMAILS = process.env.EMAILS.split(',');
-const USERNAME = process.env.USERNAME;
-const PASSWORD = process.env.PASSWORD;
+//const USERNAME = process.env.USERNAME;
+//const PASSWORD = process.env.PASSWORD;
 const APP = process.env.APP;
-let emailIndex = 0;
+//let emailIndex = 0;
 
 const restartApp = (seconds) => {
     var count = 0;
