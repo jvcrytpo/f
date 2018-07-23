@@ -162,16 +162,6 @@ const startBot = async () => {
         'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8'
     });
 
-    //Optimize
-    await page.setRequestInterception(true);
-    const block_ressources = ['image', 'stylesheet', 'media', 'font', 'texttrack', 'object', 'beacon', 'csp_report', 'imageset'];
-    page.on('request', request => {
-        if (block_ressources.indexOf(request.resourceType) > 0)
-            request.abort();
-        else
-            request.continue();
-    });
-
     gotoURL(page, `${URL}`, (page) => {
         console.log('Starting.')
         setInterval(() => {
