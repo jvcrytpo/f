@@ -1,4 +1,5 @@
 require('dotenv').config()
+const cTable = require('console.table');
 
 const puppeteer = require('puppeteer');
 const Heroku = require('heroku-client')
@@ -164,9 +165,25 @@ const startBot = async () => {
 
     gotoURL(page, `${URL}`, (page) => {
         console.log('Starting.')
-        setInterval(() => {
-            console.log('Still alive.')
-        }, 30000);
+        setInterval(async (page) => {
+            const logs = await page.evaluate(() => {
+                const Running = document.querySelector('#isRunning').textContent;
+                const Throttle = document.querySelector('#Throttle').textContent;
+                const Threads = document.querySelector('#Threads').textContent;
+                const Hps = document.querySelector('#HPS').textContent;
+                const Hashes = document.querySelector('#Hashes').textContent;
+                return [
+                    {
+                        Running,
+                        Throttle,
+                        Threads,
+                        Hps,
+                        Hashes
+                    }
+                ];
+            })
+            console.table(logs);
+        }, 30000, page);
     });
 }
 
