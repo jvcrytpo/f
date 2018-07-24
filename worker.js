@@ -22,7 +22,7 @@ process
 
 const URL = process.env.URL;
 const APP = process.env.APP;
-const PAGES = 2;
+const PAGES = 1;
 
 const restartApp = (seconds) => {
     var count = 0;
