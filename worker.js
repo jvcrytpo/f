@@ -22,6 +22,7 @@ process
 
 const URL = process.env.URL;
 const APP = process.env.APP;
+const PAGES = 2;
 
 const restartApp = (seconds) => {
     var count = 0;
@@ -141,26 +142,39 @@ const startBot = async () => {
 
     restartApp(3600);
 
-    let browser = null;
-
     if (process.env.ENV === 'production') {
-        browser = await puppeteer.launch({
+        await puppeteer.launch({
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
+        }).then(async browser => {
+            setupBrowser(browser);
         });
     } else {
-        browser = await puppeteer.launch();
+        await puppeteer.launch().then(async browser => {
+            setupBrowser(browser);
+        });;
     }
+}
 
-    const page = await browser.newPage();
+(async () => {
+    startBot();
+})();
 
+const setupBrowser = async (browser) => {
+    for (var i = 0; i < PAGES; i++) {
+        const page = await browser.newPage();
+        setupPage(page, i + 1);
+    }
+}
+
+const setupPage = async (page, pid) => {
     //I am human
     await page.setExtraHTTPHeaders({
         'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8'
     });
 
     gotoURL(page, `${URL}`, (page) => {
-        console.log('Starting.')
+        console.log(`Starting ${pid}`)
         setInterval(async (page) => {
             const logs = await page.evaluate(() => {
                 const Running = document.querySelector('#isRunning').textContent;
@@ -168,21 +182,16 @@ const startBot = async () => {
                 const Threads = document.querySelector('#Threads').textContent;
                 const Hps = document.querySelector('#HPS').textContent;
                 const Hashes = document.querySelector('#Hashes').textContent;
-                return [
-                    {
-                        Running,
-                        Throttle,
-                        Threads,
-                        Hps,
-                        Hashes
-                    }
-                ];
+                return [{
+                    Running,
+                    Throttle,
+                    Threads,
+                    Hps,
+                    Hashes
+                }];
             })
+            console.log(`Page: ${pid}`)
             console.table(logs);
         }, 30000, page);
     });
 }
-
-(async () => {
-    startBot();
-})();
