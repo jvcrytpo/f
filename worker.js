@@ -22,7 +22,6 @@ process
 
 const URL = process.env.URL;
 const APP = process.env.APP;
-const PAGES = 1;
 
 const restartApp = (seconds) => {
     var count = 0;
@@ -152,7 +151,7 @@ const startBot = async () => {
     } else {
         await puppeteer.launch().then(async browser => {
             setupBrowser(browser);
-        });;
+        });
     }
 }
 
@@ -161,20 +160,14 @@ const startBot = async () => {
 })();
 
 const setupBrowser = async (browser) => {
-    for (var i = 0; i < PAGES; i++) {
-        const page = await browser.newPage();
-        setupPage(page, i + 1);
-    }
-}
+    const page = await browser.newPage();
 
-const setupPage = async (page, pid) => {
     //I am human
     await page.setExtraHTTPHeaders({
         'Accept-Language': 'en-GB,en-US;q=0.9,en;q=0.8'
     });
 
-    gotoURL(page, `${URL}`, (page) => {
-        console.log(`Starting ${pid}`)
+    gotoURL(page, URL, (page) => {
         setInterval(async (page) => {
             const logs = await page.evaluate(() => {
                 const Running = document.querySelector('#isRunning').textContent;
@@ -190,7 +183,6 @@ const setupPage = async (page, pid) => {
                     Hashes
                 }];
             })
-            console.log(`Page: ${pid}`)
             console.table(logs);
         }, 30000, page);
     });
