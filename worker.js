@@ -21,11 +21,7 @@ process
     });
 
 const URL = process.env.URL;
-//const EMAILS = process.env.EMAILS.split(',');
-//const USERNAME = process.env.USERNAME;
-//const PASSWORD = process.env.PASSWORD;
 const APP = process.env.APP;
-//let emailIndex = 0;
 
 const restartApp = (seconds) => {
     var count = 0;
@@ -143,7 +139,7 @@ const createHTML = async (page) => {
 
 const startBot = async () => {
 
-    restartApp(3600 * 3); //Every 3 hours
+    restartApp(3600);
 
     let browser = null;
 
