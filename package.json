@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "coin-imp": "latest",
     "console.table": "^0.10.0",
     "dotenv": "^6.0.0",
     "heroku-client": "^3.0.6",
